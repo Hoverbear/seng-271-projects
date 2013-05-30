@@ -45,30 +45,26 @@ class StudyRight {
         catch (NumberFormatException e) {
           plan = 1;
         }
-        choice = console.readLine("Your chosen plan is " + student.plans.get(plan - 1) + " do you wish to accept it?: [Y/n]");
+        choice = console.readLine("Your chosen plan is " + student.plans.get(plan - 1) + " do you wish to accept it?: [Y/n]: ");
         if (choice.equals("y")) {
           chosen = true;
-          
+          for (int i = 0; i < student.plans.get(plan - 1).size(); i++) {
+            school.attendRoom(student, student.plans.get(plan - 1).get(i));
+          }
         }
       }
     }
-    else {
-      // Student chooses their own path.
-      while(student.currentRoom != "exam") {
-        if (student.credit >= school.requiredCredits || student.motivation <= 0) {
-          // The student is no longer eligible for the school due to credits or motivation.
-          student.vacation(school);
-        }
-        else {
-          // Choose the next classroom.
-          String next = console.readLine(student.credit + "/" + school.requiredCredits + " Credits. Choose your next class from " + Arrays.toString(school.rooms.get(student.currentRoom).connectors) + " (Or pick 'plan'): ");
-          if (next.equals("plan")) {
-            student.planAhead(school);
-          }
-          school.attendRoom(student, next);
-        }
+    // Student chooses their own path.
+    while(student.currentRoom != "exam") {
+      if (student.credit > school.requiredCredits || student.motivation < 0) {
+        // The student is no longer eligible for the school due to credits or motivation.
+        student.vacation(school);
       }
-      // Student is at exam room.
+      else {
+        // Choose the next classroom.
+        String next = console.readLine(student.credit + "/" + school.requiredCredits + " Credits. Choose your next class from " + Arrays.toString(school.rooms.get(student.currentRoom).connectors) + " : ");
+        school.attendRoom(student, next);
+      }
     }
   }
 }
@@ -118,6 +114,7 @@ class School {
   public void graduateStudent(Student student) {
     System.out.println("Congratulations on graduating from " + name + "! Your diploma is in the mail because you forgot to pay the fees for your convocation.");
     students.remove(student);
+    System.exit(0);
     return;
   }
   
@@ -207,18 +204,8 @@ class Student {
   
   public void planAhead(School school) {
     System.out.println("It's wise to take some time to plan... You sit down at your desk and work out some paths that might work for you...");
-    // We're going to suppress our stdout for a little while... This is done so the user doesn't get spammed while we test the waters.
-    //PrintStream original = System.out;
-    //PrintStream silent = new PrintStream(new OutputStream() {
-    //    public void write(int b) {
-    //        //DO NOTHING
-    //    }
-    //});
-    //System.setOut(silent);
     // Test all possible paths
     explore(school, school.entrance, school.exam, credit, new ArrayList<String>(path));
-    // Reset out stdout.
-    //System.setOut(original);
     System.out.println("After a overnight marathon of sweat, blood, tears, and lots of typing you come up with " + plans.size() + " plans which will lead you to graduation.");
     return;
   }
