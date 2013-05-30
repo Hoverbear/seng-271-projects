@@ -36,7 +36,21 @@ class StudyRight {
     choice = console.readLine("Do you want to plan ahead? [y/N]: ");
     if (choice.equals("y")) {
       student.planAhead(school);
-      System.exit(0);
+      boolean chosen = false;
+      while (!chosen) {
+        int plan;
+        try {
+          plan = Integer.parseInt(console.readLine("Which of the " + student.plans.size() + " plans do you want to see? [1]: "));
+        }
+        catch (NumberFormatException e) {
+          plan = 1;
+        }
+        choice = console.readLine("Your chosen plan is " + student.plans.get(plan - 1) + " do you wish to accept it?: [Y/n]");
+        if (choice.equals("y")) {
+          chosen = true;
+          
+        }
+      }
     }
     else {
       // Student chooses their own path.
@@ -181,16 +195,6 @@ class Student {
     this.name = name;
   }
   
-  // Used mainly for planning ahead. But you can add your own pre-built path here.
-  public Student(String name, ArrayList<String> path, String currentRoom, int credit, int motivation, School school) {
-    this.name = name;
-    this.path = path;
-    this.currentRoom = currentRoom;
-    this.credit = credit;
-    this.motivation = motivation;
-    this.school = school;
-  }
-  
   public void vacation(School school) {
     credit = school.rooms.get(school.entrance).credits;
     motivation = school.requiredCredits;
@@ -201,51 +205,44 @@ class Student {
     return;
   }
   
-  public ArrayList<ArrayList<String>> planAhead(School school) {
+  public void planAhead(School school) {
     System.out.println("It's wise to take some time to plan... You sit down at your desk and work out some paths that might work for you...");
     // We're going to suppress our stdout for a little while... This is done so the user doesn't get spammed while we test the waters.
-    PrintStream original = System.out;
-    PrintStream silent = new PrintStream(new OutputStream() {
-        public void write(int b) {
-            //DO NOTHING
-        }
-    });
+    //PrintStream original = System.out;
+    //PrintStream silent = new PrintStream(new OutputStream() {
+    //    public void write(int b) {
+    //        //DO NOTHING
+    //    }
+    //});
     //System.setOut(silent);
     // Test all possible paths
-    Student tester =  new Student("test");
-    school.admitStudent(tester);
-    tester.explore();
-    school.removeStudent(tester);
+    explore(school, school.entrance, school.exam, credit, new ArrayList<String>(path));
     // Reset out stdout.
-    System.setOut(original);
-    return plans;
+    //System.setOut(original);
+    System.out.println("After a overnight marathon of sweat, blood, tears, and lots of typing you come up with " + plans.size() + " plans which will lead you to graduation.");
+    return;
   }
   
-  private void explore() {
-    System.out.println(this + " :: " + currentRoom + " :: " + credit + " :: " + path);
-    if (credit == school.requiredCredits && currentRoom.equals(school.exam)) {
-      plans.add(path);
-      school.removeStudent(this);
+  private void explore(School school, String current, String destination, int cost, ArrayList<String> soFar) {
+    //System.out.println(current + " :: " + cost + " :: " + soFar);
+    if (cost > school.requiredCredits) {
       return;
     }
-    else if (currentRoom.equals(school.exam)) {
-      school.removeStudent(this);
-      return;
-    }
-    else {
-      for (int i = 0; i < school.rooms.get(currentRoom).connectors.length; i++) {
-        String newRoom = school.rooms.get(currentRoom).connectors[i];
-        Student tester = new Student("tester", path, currentRoom, credit, motivation, school);
-        school.students.add(tester);
-        school.attendRoom(tester, newRoom);
-        if (credit > school.requiredCredits) {
-          school.removeStudent(tester);
-          return;
-        }
-        tester.explore();
-        school.removeStudent(tester);
+    else if (current.equals(destination)) {
+      if (cost == school.requiredCredits) {
+        plans.add(soFar);
+      }
+      else {
+        return;
       }
     }
-    return;
+    else {
+      for (int i = 0; i < school.rooms.get(current).connectors.length; i++) {
+        String next = school.rooms.get(current).connectors[i];
+        ArrayList<String> newSoFar = new ArrayList<String>(soFar);
+        newSoFar.add(next);
+        explore(school, next, destination, cost + school.rooms.get(next).credits, newSoFar);
+      }
+    }
   }
 }
